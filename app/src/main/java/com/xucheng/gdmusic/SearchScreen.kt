@@ -39,13 +39,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private val coverCache = HashMap<String, String>()
+val coverCache = HashMap<String, String>()
 
 @Composable
 fun CoverThumb(track: Track, size: Dp, corner: Int = 8) {
