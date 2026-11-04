@@ -8,6 +8,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,7 +27,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -74,6 +85,12 @@ class AppStore {
     var currentBr by mutableIntStateOf(0)
     var bitrate by mutableIntStateOf(320)
     var showPlayer by mutableStateOf(false)
+
+    var page by mutableIntStateOf(0) // 0=搜索 1=推荐
+    var recList by mutableStateOf<List<Track>>(emptyList())
+    var recLoading by mutableStateOf(false)
+    var recMsg by mutableStateOf<String?>(null)
+    var recSeedName by mutableStateOf<String?>(null)
 }
 
 @Composable
@@ -184,6 +201,52 @@ fun App() {
         if (store.currentIndex >= 0) playTrack(store.currentIndex)
     }
 
+    fun loadRecommendations() {
+        val seed = store.queue.getOrNull(store.currentIndex) ?: store.queue.firstOrNull()
+        if (seed == null) {
+            store.recList = emptyList()
+            store.recMsg = "先去搜索并播放一首歌，我会根据它推荐相似口味"
+            return
+        }
+        store.recLoading = true
+        store.recMsg = null
+        scope.launch {
+            try {
+                val firstArtist = seed.artist.split(" / ").firstOrNull()?.trim() ?: seed.artist
+                val list = withContext(Dispatchers.IO) {
+                    val artistId = NeteaseApi.findArtistId(seed.name, firstArtist)
+                        ?: NeteaseApi.findArtistId(firstArtist, firstArtist)
+                    if (artistId == null) emptyList()
+                    else NeteaseApi.hotSongs(artistId, seed.name).shuffled().take(20)
+                }
+                store.recSeedName = seed.name
+                if (list.isEmpty()) {
+                    store.recList = emptyList()
+                    store.recMsg = "没找到推荐歌曲，换一首正在播放的歌曲再试试"
+                } else {
+                    store.recList = list
+                }
+            } catch (e: Exception) {
+                store.recMsg = "推荐加载失败，请检查网络后重试"
+            }
+            store.recLoading = false
+        }
+    }
+
+    fun playRecommendation(index: Int) {
+        val track = store.recList.getOrNull(index) ?: return
+        store.queue = store.recList
+        store.showPlayer = true
+        playTrack(index)
+    }
+
+    // 切到推荐页时自动加载
+    LaunchedEffect(store.page) {
+        if (store.page == 1 && store.recList.isEmpty() && !store.recLoading) {
+            loadRecommendations()
+        }
+    }
+
     // 监听播放器状态
     DisposableEffect(store.controller) {
         val c = store.controller ?: return@DisposableEffect onDispose { }
@@ -226,23 +289,58 @@ fun App() {
             onBitrateChange = { setBitrate(it) }
         )
     } else {
-        SearchScreen(
-            store = store,
-            recent = recent.toList(),
-            onSearch = { search() },
-            onRecentClick = { kw ->
-                store.keyword = kw
-                search()
-            },
-            onPlay = onPlay,
-            onTogglePlay = {
-                val c = store.controller
-                if (c != null) {
-                    if (c.isPlaying) c.pause() else c.play()
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) {
+                if (store.page == 0) {
+                    SearchScreen(
+                        store = store,
+                        recent = recent.toList(),
+                        onSearch = { search() },
+                        onRecentClick = { kw ->
+                            store.keyword = kw
+                            search()
+                        },
+                        onPlay = onPlay
+                    )
+                } else {
+                    RecommendScreen(
+                        store = store,
+                        onRefresh = { loadRecommendations() },
+                        onPlay = { playRecommendation(it) }
+                    )
                 }
-            },
-            onNext = { playNext() },
-            onOpenPlayer = { if (store.currentIndex >= 0) store.showPlayer = true }
-        )
+            }
+            MiniBar(
+                store = store,
+                onTogglePlay = {
+                    val c = store.controller
+                    if (c != null) {
+                        if (c.isPlaying) c.pause() else c.play()
+                    }
+                },
+                onNext = { playNext() },
+                onOpenPlayer = { if (store.currentIndex >= 0) store.showPlayer = true }
+            )
+            NavigationBar {
+                NavigationBarItem(
+                    selected = store.page == 0,
+                    onClick = { store.page = 0 },
+                    icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    label = { Text("搜索") }
+                )
+                NavigationBarItem(
+                    selected = store.page == 1,
+                    onClick = { store.page = 1 },
+                    icon = {
+                        MusicNoteIcon(
+                            tint = if (store.page == 1) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 24.dp
+                        )
+                    },
+                    label = { Text("推荐") }
+                )
+            }
+        }
     }
 }

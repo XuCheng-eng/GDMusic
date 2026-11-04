@@ -92,10 +92,7 @@ fun SearchScreen(
     recent: List<String>,
     onSearch: () -> Unit,
     onRecentClick: (String) -> Unit,
-    onPlay: (Int) -> Unit,
-    onTogglePlay: () -> Unit,
-    onNext: () -> Unit,
-    onOpenPlayer: () -> Unit
+    onPlay: (Int) -> Unit
 ) {
     Column(
         Modifier
@@ -245,48 +242,51 @@ fun SearchScreen(
                 }
             }
         }
+    }
+}
 
-        // 底部迷你播放条
-        val current = store.queue.getOrNull(store.currentIndex)
-        if (current != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { onOpenPlayer() }
-                    .padding(horizontal = 10.dp, vertical = 8.dp)
-            ) {
-                CoverThumb(current, 40.dp)
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(current.name, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        current.artist,
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.outline,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                IconButton(onClick = onTogglePlay) {
-                    if (store.isPlaying) {
-                        PauseIcon(tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                    } else {
-                        PlayIcon(tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                    }
-                }
-                IconButton(onClick = onNext) {
-                    NextIcon(tint = MaterialTheme.colorScheme.onSurface, size = 20.dp)
-                }
+/**
+ * 底部迷你播放条：搜索页与推荐页共用
+ */
+@Composable
+fun MiniBar(
+    store: AppStore,
+    onTogglePlay: () -> Unit,
+    onNext: () -> Unit,
+    onOpenPlayer: () -> Unit
+) {
+    val current = store.queue.getOrNull(store.currentIndex) ?: return
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable { onOpenPlayer() }
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+    ) {
+        CoverThumb(current, 40.dp)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(current.name, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                current.artist,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.outline,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        IconButton(onClick = onTogglePlay) {
+            if (store.isPlaying) {
+                PauseIcon(tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+            } else {
+                PlayIcon(tint = MaterialTheme.colorScheme.primary, size = 22.dp)
             }
         }
-        Spacer(
-            Modifier
-                .navigationBarsPadding()
-                .height(8.dp)
-        )
+        IconButton(onClick = onNext) {
+            NextIcon(tint = MaterialTheme.colorScheme.onSurface, size = 20.dp)
+        }
     }
 }

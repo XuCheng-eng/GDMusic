@@ -29,7 +29,7 @@ jobs:
       - name: Copy APK
         run: |
           mkdir -p output
-          cp app/build/outputs/apk/release/app-release.apk output/GDMusic-v1.0.apk
+          cp app/build/outputs/apk/release/app-release.apk output/GDMusic-v1.1.apk
           ls -lh output/
 
       - name: Upload APK artifact

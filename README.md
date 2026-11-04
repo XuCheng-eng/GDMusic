@@ -10,6 +10,7 @@
 ## 功能
 
 - 🔍 搜索歌曲 / 歌手 / 专辑（支持网易云、酷我、JOOX、B站四个音源）
+- 🎯 推荐页：基于正在播放的歌曲，拉取同歌手热门曲目随机推荐（网易云公开接口，国内直连），支持「换一批」
 - 🎵 在线播放，后台播放 + 通知栏 / 锁屏控制（Media3 MediaSession）
 - 🖼️ 专辑封面展示（播放页大图 + 列表缩略图）
 - 📝 LRC 歌词同步滚动高亮 + 中文翻译
@@ -54,6 +55,8 @@ GDMusic/
 │       ├── java/com/xucheng/gdmusic/
 │       │   ├── MainActivity.kt      # 入口 + 全局状态 + 播放控制逻辑
 │       │   ├── SearchScreen.kt      # 搜索页 + 迷你播放条
+│       │   ├── RecommendScreen.kt   # 推荐页（同歌手热门）
+│       │   ├── NeteaseApi.kt        # 网易云公开接口（推荐数据源）
 │       │   ├── PlayerScreen.kt      # 播放页 + LRC 歌词
 │       │   ├── PlayerService.kt     # 后台播放服务（通知栏控制）
 │       │   ├── GdApi.kt             # GD 音乐台 API 客户端
