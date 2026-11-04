@@ -36,5 +36,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: GDMusic-APK
-          path: output/GDMusic-v1.0.apk
+          path: output/GDMusic-v1.1.apk
           retention-days: 30
