@@ -24,6 +24,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 个人使用：用 debug 签名直接出可安装的 release 包（R8 压缩后体积更小）
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
